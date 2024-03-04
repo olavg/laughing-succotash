@@ -1,49 +1,25 @@
-Add-Type @"
-    using System;
-    using System.Runtime.InteropServices;
-
-    public class MouseEvents {
-        [DllImport("user32.dll")]
-        public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
-
-        [DllImport("user32.dll")]
-        public static extern bool GetCursorPos(out POINT lpPoint);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT {
-            public int X;
-            public int Y;
-        }
-
-        public const int MOUSEEVENTF_MOVE = 0x0001;
-    }
-"@
-
-function Get-MousePosition {
-    $point = New-Object MouseEvents.POINT
-    [MouseEvents]::GetCursorPos([ref]$point)
-    return $point
-}
+Add-Type -AssemblyName System.Windows.Forms
 
 do {
     # Get the current cursor position
-    $point = Get-MousePosition
+    $X = [System.Windows.Forms.Cursor]::Position.X
+    $Y = [System.Windows.Forms.Cursor]::Position.Y
 
-    $xMove = 1  # Assume moving right initially
-
-    # If the cursor is too close to the left edge of the screen, adjust direction
-    if ($point.X -le 1) {
-        $xMove = 1
+    # Determine movement direction based on screen boundary
+    if ($X -le 1) {
+        $newX = $X + 1  # Move right if too close to the left edge
     } else {
-        $xMove = -1  # Move left if not too close to the edge
+        $newX = $X - 1  # Otherwise, move left
     }
 
-    # Move mouse cursor based on $xMove direction
-    [MouseEvents]::mouse_event([MouseEvents]::MOUSEEVENTF_MOVE, $xMove, 0, 0, 0)
+    # Apply the calculated movement
+    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($newX, $Y)
+
+    # Wait a bit before moving back to give the appearance of movement
     Start-Sleep -Milliseconds 100
 
-    # Move mouse cursor back to the original position
-    [MouseEvents]::mouse_event([MouseEvents]::MOUSEEVENTF_MOVE, -$xMove, 0, 0, 0)
+    # Move cursor back to original position
+    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($X, $Y)
 
     # Wait for one minute
     Start-Sleep -Seconds 60
