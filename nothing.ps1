@@ -1,5 +1,15 @@
 Add-Type -AssemblyName System.Windows.Forms
 
+# Capture the script start time
+$scriptStartTime = Get-Date
+
+# Determine whether the script started before or after 5 PM
+$endTime = if ($scriptStartTime.Hour -ge 17) {
+    $scriptStartTime.AddHours(2) # Set end time to 2 hours after start time if started after 5 PM
+} else {
+    (Get-Date).Date.AddHours(17) # Set end time to today's 5 PM if started before 5 PM
+}
+
 do {
     # Get the current cursor position
     $X = [System.Windows.Forms.Cursor]::Position.X
@@ -24,9 +34,8 @@ do {
     # Wait for one minute
     Start-Sleep -Seconds 60
 
-    # Check if the current time is 5 PM or later
+    # Check the current time
     $currentTime = Get-Date
-    if ($currentTime.Hour -ge 17) {
-        break  # Exit the loop
-    }
-} while ($true)
+} while ($currentTime -lt $endTime) # Continue looping until the current time is less than the end time
+
+Write-Output "Script has ended based on the time condition."
