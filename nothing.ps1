@@ -5,6 +5,7 @@ Add-Type @"
     public class MouseEvents {
         [DllImport("user32.dll")]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
+
         [DllImport("user32.dll")]
         public static extern bool GetCursorPos(out POINT lpPoint);
 
@@ -18,17 +19,23 @@ Add-Type @"
     }
 "@
 
-do {
-    # Get the current cursor position
+function Get-MousePosition {
     $point = New-Object MouseEvents.POINT
     [MouseEvents]::GetCursorPos([ref]$point)
-    $xMove = 1  # Default movement to the right
+    return $point
+}
 
-    # If the cursor is too close to the left edge of the screen, move right instead
-    if ($point.X -le 0) {
+do {
+    # Get the current cursor position
+    $point = Get-MousePosition
+
+    $xMove = 1  # Assume moving right initially
+
+    # If the cursor is too close to the left edge of the screen, adjust direction
+    if ($point.X -le 1) {
         $xMove = 1
     } else {
-        $xMove = -1  # Move left if not close to the edge
+        $xMove = -1  # Move left if not too close to the edge
     }
 
     # Move mouse cursor based on $xMove direction
@@ -36,7 +43,7 @@ do {
     Start-Sleep -Milliseconds 100
 
     # Move mouse cursor back to the original position
-    [MouseEvents]::mouse_event([MouseEvents]::MOUSEEVENTF_MOVE, $xMove * -1, 0, 0, 0)
+    [MouseEvents]::mouse_event([MouseEvents]::MOUSEEVENTF_MOVE, -$xMove, 0, 0, 0)
 
     # Wait for one minute
     Start-Sleep -Seconds 60
